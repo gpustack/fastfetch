@@ -1,5 +1,24 @@
 #include "cf_helpers.h"
 
+const char *ffCfNumGetDouble(CFTypeRef cf, double *result)
+{
+    if (CFGetTypeID(cf) == CFNumberGetTypeID())
+    {
+        if (!CFNumberGetValue((CFNumberRef)cf, kCFNumberDoubleType, result))
+            return "Number type is not Double";
+        return NULL;
+    }
+    else if (CFGetTypeID(cf) == CFDataGetTypeID())
+    {
+        if (CFDataGetLength((CFDataRef)cf) != sizeof(double))
+            return "Data length is not sizeof(double)";
+        CFDataGetBytes((CFDataRef)cf, CFRangeMake(0, sizeof(double)), (uint8_t *)result);
+        return NULL;
+    }
+
+    return "TypeID is neither 'CFNumber' nor 'CFData'";
+}
+
 const char* ffCfNumGetInt64(CFTypeRef cf, int64_t* result)
 {
     if(CFGetTypeID(cf) == CFNumberGetTypeID())
@@ -115,6 +134,15 @@ const char* ffCfDictGetInt64(CFDictionaryRef dict, CFStringRef key, int64_t* res
         return "CFDictionaryGetValue() failed";
 
     return ffCfNumGetInt64(cf, result);
+}
+
+const char *ffCfDictGetDouble(CFDictionaryRef dict, CFStringRef key, double *result)
+{
+    CFTypeRef cf = (CFTypeRef)CFDictionaryGetValue(dict, key);
+    if (cf == NULL)
+        return "CFDictionaryGetValue() failed";
+
+    return ffCfNumGetDouble(cf, result);
 }
 
 const char* ffCfDictGetData(CFDictionaryRef dict, CFStringRef key, uint32_t offset, uint32_t size, uint8_t* result, uint32_t* length)
