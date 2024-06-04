@@ -66,6 +66,16 @@ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus)
         if(ffCfDictGetInt(properties, CFSTR("gpu-core-count"), &gpu->coreCount)) // For Apple
             gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
 
+        gpu->coreUtilizationRate = FF_GPU_CORE_UTILIZATION_RATE_UNSET;
+        if (CFDictionaryContainsKey(properties, CFSTR("PerformanceStatistics")))
+        {
+            CFDictionaryRef performanceDict;
+            if (!ffCfDictGetDict(properties, CFSTR("PerformanceStatistics"), &performanceDict))
+            {
+                ffCfDictGetDouble(performanceDict, CFSTR("Device Utilization %"), &gpu->coreUtilizationRate);
+            }
+        }
+
         ffStrbufInit(&gpu->name);
         //IOAccelerator returns model / vendor-id properties for Apple Silicon, but not for Intel Iris GPUs.
         //Still needs testing for AMD's
@@ -83,6 +93,8 @@ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus)
             }
             ffCfDictGetString(properties, CFSTR("model"), &gpu->name);
         }
+
+        gpu->uuid = ffStrbufGetUUID(&gpu->name);
 
         ffStrbufInit(&gpu->vendor);
         int vendorId;

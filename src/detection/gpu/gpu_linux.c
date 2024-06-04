@@ -216,10 +216,12 @@ static const char* detectPci(const FFGPUOptions* options, FFlist* gpus, FFstrbuf
     FFGPUResult* gpu = (FFGPUResult*)ffListAdd(gpus);
     ffStrbufInitStatic(&gpu->vendor, ffGetGPUVendorString((uint16_t) vendorId));
     ffStrbufInit(&gpu->name);
+    ffStrbufInit(&gpu->uuid);
     ffStrbufInit(&gpu->driver);
     ffStrbufInit(&gpu->platformApi);
     gpu->temperature = FF_GPU_TEMP_UNSET;
     gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
+    gpu->coreUtilizationRate = FF_GPU_CORE_UTILIZATION_RATE_UNSET;
     gpu->type = FF_GPU_TYPE_UNKNOWN;
     gpu->dedicated.total = gpu->dedicated.used = gpu->shared.total = gpu->shared.used = FF_GPU_VMEM_SIZE_UNSET;
     gpu->deviceId = ((uint64_t) pciDomain << 6) | ((uint64_t) pciBus << 4) | (deviceId << 2) | pciFunc;
@@ -276,21 +278,25 @@ static const char* detectPci(const FFGPUOptions* options, FFlist* gpus, FFstrbuf
     {
         if (options->temp || options->driverSpecific)
         {
-            ffDetectNvidiaGpuInfo(&(FFGpuDriverCondition) {
-                .type = FF_GPU_DRIVER_CONDITION_TYPE_BUS_ID,
-                .pciBusId = {
-                    .domain = pciDomain,
-                    .bus = pciBus,
-                    .device = pciDevice,
-                    .func = pciFunc,
+            ffDetectNvidiaGpuInfo(&(FFGpuDriverCondition){
+                    .type = FF_GPU_DRIVER_CONDITION_TYPE_BUS_ID,
+                    .pciBusId = {
+                        .domain = pciDomain,
+                        .bus = pciBus,
+                        .device = pciDevice,
+                        .func = pciFunc,
+                    },
                 },
-            }, (FFGpuDriverResult) {
-                .temp = options->temp ? &gpu->temperature : NULL,
-                .memory = options->driverSpecific ? &gpu->dedicated : NULL,
-                .coreCount = options->driverSpecific ? (uint32_t*) &gpu->coreCount : NULL,
-                .type = &gpu->type,
-                .frequency = options->driverSpecific ? &gpu->frequency : NULL,
-            }, "libnvidia-ml.so");
+                (FFGpuDriverResult){
+                    .temp = options->temp ? &gpu->temperature : NULL,
+                    .memory = options->driverSpecific ? &gpu->dedicated : NULL,
+                    .coreCount = options->driverSpecific ? (uint32_t *)&gpu->coreCount : NULL,
+                    .type = &gpu->type,
+                    .frequency = options->driverSpecific ? &gpu->frequency : NULL,
+                    .coreUtilizationRate = &gpu->coreUtilizationRate,
+                    .uuid = &gpu->uuid,
+                },
+                "libnvidia-ml.so");
         }
 
         if (gpu->type == FF_GPU_TYPE_UNKNOWN)

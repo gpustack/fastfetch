@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-#define FF_GPU_NUM_FORMAT_ARGS 12
+#define FF_GPU_NUM_FORMAT_ARGS 14
 
 static void printGPUResult(FFGPUOptions* options, uint8_t index, const FFGPUResult* gpu)
 {
@@ -69,6 +69,12 @@ static void printGPUResult(FFGPUOptions* options, uint8_t index, const FFGPUResu
         if (gpu->type != FF_GPU_TYPE_UNKNOWN)
             ffStrbufAppendF(&output, " [%s]", type);
 
+        if (gpu->coreUtilizationRate != FF_GPU_CORE_UTILIZATION_RATE_UNSET)
+        {
+            ffStrbufAppendS(&output, " - ");
+            ffPercentAppendNum(&output, gpu->coreUtilizationRate, options->percent, true, &options->moduleArgs);
+        }
+
         ffStrbufPutTo(&output, stdout);
     }
     else
@@ -87,6 +93,7 @@ static void printGPUResult(FFGPUOptions* options, uint8_t index, const FFGPUResu
         FF_PRINT_FORMAT_CHECKED(FF_GPU_MODULE_NAME, index, &options->moduleArgs, FF_PRINT_TYPE_DEFAULT, FF_GPU_NUM_FORMAT_ARGS, ((FFformatarg[]) {
             {FF_FORMAT_ARG_TYPE_STRBUF, &gpu->vendor, "vendor"},
             {FF_FORMAT_ARG_TYPE_STRBUF, &gpu->name, "name"},
+             {FF_FORMAT_ARG_TYPE_STRBUF, &gpu->uuid, "uuid"},
             {FF_FORMAT_ARG_TYPE_STRBUF, &gpu->driver, "driver"},
             {FF_FORMAT_ARG_TYPE_STRBUF, &tempStr, "temperature"},
             {FF_FORMAT_ARG_TYPE_INT, &gpu->coreCount, "core-count"},
@@ -97,6 +104,7 @@ static void printGPUResult(FFGPUOptions* options, uint8_t index, const FFGPUResu
             {FF_FORMAT_ARG_TYPE_STRBUF, &sUsed, "shared-used"},
             {FF_FORMAT_ARG_TYPE_STRBUF, &gpu->platformApi, "platform-api"},
             {FF_FORMAT_ARG_TYPE_DOUBLE, &gpu->frequency, "frequency"},
+            {FF_FORMAT_ARG_TYPE_DOUBLE, &gpu->coreUtilizationRate, "core-utilization-rate"},
         }));
     }
 }
@@ -315,6 +323,9 @@ void ffGenerateGPUJsonResult(FFGPUOptions* options, yyjson_mut_doc* doc, yyjson_
     FF_LIST_FOR_EACH(FFGPUResult, gpu, gpus)
     {
         yyjson_mut_val* obj = yyjson_mut_arr_add_obj(doc, arr);
+
+        yyjson_mut_obj_add_strbuf(doc, obj, "uuid", &gpu->uuid);
+
         if (gpu->coreCount != FF_GPU_CORE_COUNT_UNSET)
             yyjson_mut_obj_add_int(doc, obj, "coreCount", gpu->coreCount);
         else
@@ -367,6 +378,11 @@ void ffGenerateGPUJsonResult(FFGPUOptions* options, yyjson_mut_doc* doc, yyjson_
         yyjson_mut_obj_add_real(doc, obj, "frequency", gpu->frequency); // NaN will be output as "null"
 
         yyjson_mut_obj_add_uint(doc, obj, "deviceId", gpu->deviceId);
+
+        if (gpu->coreUtilizationRate == FF_GPU_CORE_UTILIZATION_RATE_UNSET)
+            yyjson_mut_obj_add_null(doc, obj, "coreUtilizationRate");
+        else
+            yyjson_mut_obj_add_real(doc, obj, "coreUtilizationRate", gpu->coreUtilizationRate);
     }
 
     FF_LIST_FOR_EACH(FFGPUResult, gpu, gpus)
@@ -380,20 +396,22 @@ void ffGenerateGPUJsonResult(FFGPUOptions* options, yyjson_mut_doc* doc, yyjson_
 
 void ffPrintGPUHelpFormat(void)
 {
-    FF_PRINT_MODULE_FORMAT_HELP_CHECKED(FF_GPU_MODULE_NAME, "{1} {2}", FF_GPU_NUM_FORMAT_ARGS, ((const char* []) {
-        "GPU vendor - vendor",
-        "GPU name - name",
-        "GPU driver - driver",
-        "GPU temperature - temperature",
-        "GPU core count - core-count",
-        "GPU type - type",
-        "GPU total dedicated memory - dedicated-total",
-        "GPU used dedicated memory - dedicated-used",
-        "GPU total shared memory - shared-total",
-        "GPU used shared memory - shared-used",
-        "The platform API used when detecting the GPU - platform-api",
-        "Current frequency in GHz - frequency",
-    }));
+    FF_PRINT_MODULE_FORMAT_HELP_CHECKED(FF_GPU_MODULE_NAME, "{1} {2}", FF_GPU_NUM_FORMAT_ARGS, ((const char *[]){
+                                                                                                   "GPU vendor - vendor",
+                                                                                                   "GPU name - name",
+                                                                                                   "GPU uuid - uuid",
+                                                                                                   "GPU driver - driver",
+                                                                                                   "GPU temperature - temperature",
+                                                                                                   "GPU core count - core-count",
+                                                                                                   "GPU type - type",
+                                                                                                   "GPU total dedicated memory - dedicated-total",
+                                                                                                   "GPU used dedicated memory - dedicated-used",
+                                                                                                   "GPU total shared memory - shared-total",
+                                                                                                   "GPU used shared memory - shared-used",
+                                                                                                   "The platform API used when detecting the GPU - platform-api",
+                                                                                                   "Current frequency in GHz - frequency",
+                                                                                                   "Core utilization rate - core-utilization-rate",
+                                                                                               }));
 }
 
 void ffInitGPUOptions(FFGPUOptions* options)
