@@ -210,6 +210,58 @@ static double detectCPUTemp(void)
     return FF_CPU_TEMP_UNSET;
 }
 
+typedef struct
+{
+    unsigned long long user;
+    unsigned long long nice;
+    unsigned long long system;
+    unsigned long long idle;
+    unsigned long long iowait;
+    unsigned long long irq;
+    unsigned long long softirq;
+    unsigned long long steal;
+    unsigned long long guest;
+    unsigned long long guest_nice;
+} CPUUsage;
+
+static void readCPUUsage(CPUUsage *usage)
+{
+    FF_AUTO_CLOSE_FILE FILE *cpustat = fopen("/proc/stat", "r");
+    if (cpustat != NULL)
+    {
+        char buffer[256];
+        if (fgets(buffer, sizeof(buffer), cpustat) != NULL)
+        {
+            sscanf(buffer, "cpu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu", &usage->user, &usage->nice, &usage->system,&usage->idle, &usage->iowait, &usage->irq,&usage->softirq, &usage->steal, &usage->guest,&usage->guest_nice);  
+        }
+    } 
+}
+
+static double detectCPUUtilizationRate(void)
+{
+    CPUUsage prev, curr;
+    readCPUUsage(&prev);
+
+    sleep(1);
+
+    readCPUUsage(&curr);
+
+    unsigned long long prev_idle = prev.idle + prev.iowait;
+    unsigned long long curr_idle = curr.idle + curr.iowait;
+
+    unsigned long long prev_non_idle = prev.user + prev.nice + prev.system + prev.irq + prev.softirq + prev.steal;
+    unsigned long long curr_non_idle = curr.user + curr.nice + curr.system + curr.irq + curr.softirq + curr.steal;
+
+    unsigned long long prev_total = prev_idle + prev_non_idle;
+    unsigned long long curr_total = curr_idle + curr_non_idle;
+
+    unsigned long long totald = curr_total - prev_total;
+    unsigned long long idled = curr_idle - prev_idle;
+
+    double cpu_percentage = ((double)(totald - idled) / (double)totald) * 100.0;
+    return cpu_percentage;
+}
+
 static void parseIsa(FFstrbuf* cpuIsa)
 {
     if(ffStrbufStartsWithS(cpuIsa, "rv"))
@@ -271,6 +323,7 @@ const char* ffDetectCPUImpl(const FFCPUOptions* options, FFCPUResult* cpu)
     cpu->coresLogical = (uint16_t) get_nprocs_conf();
     cpu->coresOnline = (uint16_t) get_nprocs();
     cpu->coresPhysical = (uint16_t) ffStrbufToUInt(&physicalCoresBuffer, cpu->coresLogical);
+    cpu->coresUtilizationRate = detectCPUUtilizationRate();
 
     if (!detectFrequency(cpu, options) || cpu->frequencyBase != cpu->frequencyBase)
         cpu->frequencyBase = ffStrbufToDouble(&cpuMHz) / 1000;

@@ -3,6 +3,7 @@
 #include "fastfetch.h"
 
 #define FF_CPU_TEMP_UNSET (0/0.0)
+#define FF_CPU_UTILIZATION_RATE_UNSET -1
 
 typedef struct FFCPUCore
 {
@@ -18,6 +19,7 @@ typedef struct FFCPUResult
     uint16_t coresPhysical;
     uint16_t coresLogical;
     uint16_t coresOnline;
+    double coresUtilizationRate;
 
     double frequencyBase; // GHz
     double frequencyMax; // GHz
