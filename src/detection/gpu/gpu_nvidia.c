@@ -10,9 +10,12 @@ struct FFNvmlData {
     FF_LIBRARY_SYMBOL(nvmlDeviceGetPciInfo_v3)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetTemperature)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetMemoryInfo_v2)
+    FF_LIBRARY_SYMBOL(nvmlDeviceGetMemoryInfo)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetNumGpuCores)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetMaxClockInfo)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetBrand)
+    FF_LIBRARY_SYMBOL(nvmlDeviceGetUtilizationRates)
+    FF_LIBRARY_SYMBOL(nvmlDeviceGetUUID)
 
     bool inited;
 } nvmlData;
@@ -33,9 +36,12 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetPciInfo_v3)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetTemperature)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetMemoryInfo_v2)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetMemoryInfo)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetNumGpuCores)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetMaxClockInfo)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetBrand)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUtilizationRates)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUUID)
 
         if (ffnvmlInit_v2() != NVML_SUCCESS)
         {
@@ -116,6 +122,16 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
             result.memory->total = memory.used + memory.free;
             result.memory->used = memory.used;
         }
+        else
+        {
+            nvmlMemory_t memory_v1;
+            nvmlReturn_t r2 = nvmlData.ffnvmlDeviceGetMemoryInfo(device, &memory_v1);
+            if (r2 == NVML_SUCCESS)
+            {
+                result.memory->total = memory_v1.total;
+                result.memory->used = memory_v1.used;
+            }
+        }
     }
 
     if (result.coreCount)
@@ -126,6 +142,20 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
         uint32_t clockMHz;
         if (nvmlData.ffnvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clockMHz) == NVML_SUCCESS)
             *result.frequency = clockMHz / 1000.;
+    }
+
+    if (result.coreUtilizationRate)
+    {
+        nvmlUtilization_t utilization;
+        if (nvmlData.ffnvmlDeviceGetUtilizationRates(device, &utilization) == NVML_SUCCESS)
+            *result.coreUtilizationRate = utilization.gpu;
+    }
+
+    if (result.uuid)
+    {
+        char uuid[NVML_DEVICE_UUID_V2_BUFFER_SIZE];
+        if (nvmlData.ffnvmlDeviceGetUUID(device, uuid, sizeof(uuid)) == NVML_SUCCESS)
+            *result.uuid = ffStrbufCreateStatic(uuid);
     }
 
     return NULL;

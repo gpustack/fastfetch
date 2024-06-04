@@ -7,6 +7,7 @@
 // https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceStructs.html
 #define NVML_DEVICE_PCI_BUS_ID_BUFFER_SIZE 32
 #define NVML_DEVICE_PCI_BUS_ID_BUFFER_V2_SIZE 16
+#define NVML_DEVICE_UUID_V2_BUFFER_SIZE 96
 
 typedef enum { NVML_SUCCESS = 0 } nvmlReturn_t;
 typedef struct nvmlDevice_t* nvmlDevice_t;
@@ -55,6 +56,19 @@ typedef struct {
 // https://github.com/NVIDIA/nvidia-settings/issues/78#issuecomment-1012837988
 enum { nvmlMemory_v2 = (unsigned int)(sizeof(nvmlMemory_v2_t) | (2 << 24U)) };
 
+
+// https://docs.nvidia.com/deploy/nvml-api/structnvmlMemory__t.html#structnvmlMemory__t
+// Memory allocation information for a device (v1)
+typedef struct
+{
+    // Total physical device memory (in bytes)
+    unsigned long long total;
+    // Unallocated device memory (in bytes)
+    unsigned long long free;
+    // Sum of Reserved and Allocated device memory (in bytes)
+    unsigned long long used;
+} nvmlMemory_t;
+
 // https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceEnumvs.html#group__nvmlDeviceEnumvs_1g805c0647be9996589fc5e3f6ff680c64
 // Clock types
 typedef enum {
@@ -94,6 +108,16 @@ typedef enum {
     NVML_BRAND_COUNT,
 } nvmlBrandType_t;
 
+// https://docs.nvidia.com/deploy/nvml-api/structnvmlUtilization__t.html#structnvmlUtilization__t
+// Utilization information for a device.
+typedef struct
+{
+    // Percent of time over the past second during which one or more kernels was executing on the GPU
+    unsigned int gpu;
+    // Percent of time over the past second during which global (device) memory was being read or written
+    unsigned int memory;
+} nvmlUtilization_t;
+
 // https://docs.nvidia.com/deploy/nvml-api/group__nvmlInitializationAndCleanup.html#group__nvmlInitializationAndCleanup
 // Initialize NVML, but don't initialize any GPUs yet
 nvmlReturn_t nvmlInit_v2(void);
@@ -113,9 +137,15 @@ extern nvmlReturn_t nvmlDeviceGetPciInfo_v3(nvmlDevice_t device, nvmlPciInfo_t* 
 extern nvmlReturn_t nvmlDeviceGetTemperature(nvmlDevice_t device, nvmlTemperatureSensors_t sensorType, unsigned int* temp);
 // Retrieves the amount of used, free, reserved and total memory available on the device, in bytes. The reserved amount is supported on version 2 only
 extern nvmlReturn_t nvmlDeviceGetMemoryInfo_v2(nvmlDevice_t device, nvmlMemory_v2_t* memory);
+// Retrieves the amount of used, free, total memory available on the device, in bytes.
+extern nvmlReturn_t nvmlDeviceGetMemoryInfo(nvmlDevice_t device, nvmlMemory_t *memory);
 // Gets the device's core count
 extern nvmlReturn_t nvmlDeviceGetNumGpuCores(nvmlDevice_t device, unsigned int* numCores);
 // Retrieves the maximum clock speeds for the device
 extern nvmlReturn_t nvmlDeviceGetMaxClockInfo(nvmlDevice_t device, nvmlClockType_t type, unsigned int* clock);
 // Retrieves the brand of this device
 extern nvmlReturn_t nvmlDeviceGetBrand(nvmlDevice_t device, nvmlBrandType_t* type);
+// Retrieves the current utilization rates for the device
+extern nvmlReturn_t nvmlDeviceGetUtilizationRates(nvmlDevice_t device, nvmlUtilization_t *utilization);
+// Retrieves the globally unique immutable UUID associated with this device, as a 5 part hexadecimal string, that augments the immutable, board serial identifier.
+extern nvmlReturn_t nvmlDeviceGetUUID(nvmlDevice_t device, char *uuid, unsigned int length);

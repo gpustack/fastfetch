@@ -15,6 +15,7 @@ const char* ffCfDictGetString(CFDictionaryRef dict, CFStringRef key, FFstrbuf* r
 const char* ffCfDictGetBool(CFDictionaryRef dict, CFStringRef key, bool* result);
 const char* ffCfDictGetInt(CFDictionaryRef dict, CFStringRef key, int* result);
 const char* ffCfDictGetInt64(CFDictionaryRef dict, CFStringRef key, int64_t* result);
+const char *ffCfDictGetDouble(CFDictionaryRef dict, CFStringRef key, double *result);
 const char* ffCfDictGetData(CFDictionaryRef dict, CFStringRef key, uint32_t offset, uint32_t size, uint8_t* result, uint32_t* length);
 const char* ffCfDictGetDict(CFDictionaryRef dict, CFStringRef key, CFDictionaryRef* result);
 

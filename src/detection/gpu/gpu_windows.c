@@ -86,6 +86,7 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
         gpu->dedicated.total = gpu->dedicated.used = gpu->shared.total = gpu->shared.used = FF_GPU_VMEM_SIZE_UNSET;
         gpu->deviceId = 0;
         gpu->frequency = FF_GPU_FREQUENCY_UNSET;
+        gpu->coreUtilizationRate = FF_GPU_CORE_UTILIZATION_RATE_UNSET;
 
         if (deviceKeyLength == 100 && displayDevice.DeviceKey[deviceKeyPrefixLength - 1] == '{')
         {
@@ -147,7 +148,7 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
             if (vendorId && deviceId && subSystemId)
             {
                 detectFn(
-                    &(FFGpuDriverCondition) {
+                    &(FFGpuDriverCondition){
                         .type = FF_GPU_DRIVER_CONDITION_TYPE_DEVICE_ID | FF_GPU_DRIVER_CONDITION_TYPE_LUID,
                         .pciDeviceId = {
                             .deviceId = deviceId,
@@ -157,15 +158,15 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
                         },
                         .luid = gpu->deviceId,
                     },
-                    (FFGpuDriverResult) {
+                    (FFGpuDriverResult){
                         .temp = options->temp ? &gpu->temperature : NULL,
                         .memory = options->driverSpecific ? &gpu->dedicated : NULL,
-                        .coreCount = options->driverSpecific ? (uint32_t*) &gpu->coreCount : NULL,
+                        .coreCount = options->driverSpecific ? (uint32_t *)&gpu->coreCount : NULL,
                         .type = &gpu->type,
                         .frequency = options->driverSpecific ? &gpu->frequency : NULL,
+                        .coreUtilizationRate = &gpu->coreUtilizationRate,
                     },
-                    dllName
-                );
+                    dllName);
             }
         }
     }

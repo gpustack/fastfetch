@@ -73,6 +73,7 @@ const char* ffGPUDetectByDirectX(FF_MAYBE_UNUSED const FFGPUOptions* options, FF
         gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
         gpu->temperature = FF_GPU_TEMP_UNSET;
         gpu->frequency = FF_GPU_FREQUENCY_UNSET;
+        gpu->coreUtilizationRate = FF_GPU_CORE_UTILIZATION_RATE_UNSET;
         ffStrbufInitStatic(&gpu->platformApi, "DXCore");
 
         ffStrbufInit(&gpu->driver);
@@ -115,13 +116,14 @@ const char* ffGPUDetectByDirectX(FF_MAYBE_UNUSED const FFGPUOptions* options, FF
                         .revId = hardwareId.revision,
                     },
                 };
-                ffDetectNvidiaGpuInfo(&cond, (FFGpuDriverResult) {
-                    .temp = options->temp ? &gpu->temperature : NULL,
-                    .memory = options->driverSpecific ? &gpu->dedicated : NULL,
-                    .coreCount = options->driverSpecific ? (uint32_t*) &gpu->coreCount : NULL,
-                    .type = &gpu->type,
-                    .frequency = options->driverSpecific ? &gpu->frequency : NULL,
-                }, "/usr/lib/wsl/lib/libnvidia-ml.so");
+                ffDetectNvidiaGpuInfo(&cond, (FFGpuDriverResult){
+                   .temp = options->temp ? &gpu->temperature : NULL,
+                   .memory = options->driverSpecific ? &gpu->dedicated : NULL,
+                   .coreCount = options->driverSpecific ? (uint32_t *)&gpu->coreCount : NULL,
+                   .type = &gpu->type,
+                   .frequency = options->driverSpecific ? &gpu->frequency : NULL,
+                   .coreUtilizationRate = &gpu->coreUtilizationRate,
+               }, "/usr/lib/wsl/lib/libnvidia-ml.so");
             }
         }
     }

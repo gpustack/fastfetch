@@ -2,6 +2,8 @@
 
 #include <ctype.h>
 #include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
 
 char* CHAR_NULL_PTR = "";
 
@@ -496,4 +498,30 @@ void ffStrbufLowerCase(FFstrbuf* strbuf)
 {
     for (uint32_t i = 0; i < strbuf->length; ++i)
         strbuf->chars[i] = (char) tolower(strbuf->chars[i]);
+}
+
+FFstrbuf ffStrbufGetUUID(const FFstrbuf *strbuf)
+{
+    FFstrbuf uuid;
+    ffStrbufInit(&uuid);
+
+    char bytes[16] = {0};
+    for (uint32_t i = 0; i < strbuf->length && i < 16; i++)
+    {
+        bytes[i] = strbuf->chars[i];
+    }
+
+    for (uint32_t i = 0; i < 16; i++)
+    {
+        char buffer[3];
+        sprintf(buffer, "%02x", bytes[i]);
+        ffStrbufAppendS(&uuid, buffer);
+
+        if (i == 3 || i == 5 || i == 7 || i == 9)
+        {
+            ffStrbufAppendC(&uuid, '-');
+        }
+    }
+
+    return uuid;
 }
