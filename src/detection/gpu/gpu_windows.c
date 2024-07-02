@@ -78,6 +78,7 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
         FFGPUResult* gpu = (FFGPUResult*)ffListAdd(gpus);
         ffStrbufInitStatic(&gpu->vendor, ffGetGPUVendorString(vendorId));
         ffStrbufInitWS(&gpu->name, displayDevice.DeviceString);
+        ffStrbufInit(&gpu->uuid);
         ffStrbufInit(&gpu->driver);
         ffStrbufInitStatic(&gpu->platformApi, "Direct3D");
         gpu->temperature = FF_GPU_TEMP_UNSET;
@@ -165,6 +166,7 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
                         .type = &gpu->type,
                         .frequency = options->driverSpecific ? &gpu->frequency : NULL,
                         .coreUtilizationRate = &gpu->coreUtilizationRate,
+                        .uuid = &gpu->uuid,
                     },
                     dllName);
             }

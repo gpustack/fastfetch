@@ -155,7 +155,7 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
     {
         char uuid[NVML_DEVICE_UUID_V2_BUFFER_SIZE];
         if (nvmlData.ffnvmlDeviceGetUUID(device, uuid, sizeof(uuid)) == NVML_SUCCESS)
-            *result.uuid = ffStrbufCreateStatic(uuid);
+            ffStrbufAppendS(result.uuid, uuid);
     }
 
     return NULL;
