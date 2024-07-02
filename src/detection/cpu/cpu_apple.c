@@ -3,14 +3,6 @@
 #include "detection/temps/temps_apple.h"
 #include "util/stringUtils.h"
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <mach/mach.h>
-#include <mach/processor_info.h>
-#include <mach/mach_host.h>
-#include <unistd.h>
-
 static double detectCpuTemp(const FFstrbuf* cpuName)
 {
     double result = 0;
@@ -107,49 +99,6 @@ static const char* detectCoreCount(FFCPUResult* cpu)
     return NULL;
 }
 
-static double detectCoreUtilizationRate()
-{
-    double cpuUsage = FF_CPU_UTILIZATION_RATE_UNSET;
-
-    natural_t cpuCount;
-    processor_info_array_t cpuInfo;
-    processor_info_array_t prevCpuInfo = NULL;
-    mach_msg_type_number_t numCPUInfo;
-    mach_msg_type_number_t numPrevCpuInfo = 0;
-    host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &cpuCount, (processor_info_array_t *)&cpuInfo, &numCPUInfo);
-
-    sleep(1);
-
-    prevCpuInfo = cpuInfo;
-    numPrevCpuInfo = numCPUInfo;
-    host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &cpuCount, (processor_info_array_t *)&cpuInfo, &numCPUInfo);
-
-    float totalInUse = 0, totalTotal = 0;
-    for (unsigned i = 0; i < cpuCount; i++)
-    {
-        float userTime = cpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_USER] - prevCpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_USER];
-        float systemTime = cpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_SYSTEM] - prevCpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_SYSTEM];
-        float niceTime = cpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_NICE] - prevCpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_NICE];
-        float idleTime = cpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_IDLE] - prevCpuInfo[(CPU_STATE_MAX * i) + CPU_STATE_IDLE];
-
-        float inUse = userTime + systemTime + niceTime;
-        float total = inUse + idleTime;
-
-        totalInUse += inUse;
-        totalTotal += total;
-    }
-
-    cpuUsage = (totalInUse / totalTotal) * 100;
-
-    if (prevCpuInfo)
-        vm_deallocate(mach_task_self(), (vm_address_t)prevCpuInfo, numPrevCpuInfo * sizeof(integer_t));
-
-    if (cpuInfo)
-        vm_deallocate(mach_task_self(), (vm_address_t)cpuInfo, numCPUInfo * sizeof(integer_t));
-
-    return cpuUsage;
-}
-
 const char* ffDetectCPUImpl(const FFCPUOptions* options, FFCPUResult* cpu)
 {
     if (ffSysctlGetString("machdep.cpu.brand_string", &cpu->name) != NULL)
@@ -175,8 +124,6 @@ const char* ffDetectCPUImpl(const FFCPUOptions* options, FFCPUResult* cpu)
     if (options->showPeCoreCount) detectCoreCount(cpu);
 
     cpu->temperature = options->temp ? detectCpuTemp(&cpu->name) : FF_CPU_TEMP_UNSET;
-
-    cpu->coresUtilizationRate = detectCoreUtilizationRate();
 
     return NULL;
 }
