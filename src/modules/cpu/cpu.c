@@ -6,7 +6,7 @@
 #include "modules/cpu/cpu.h"
 #include "util/stringUtils.h"
 
-#define FF_CPU_NUM_FORMAT_ARGS 11
+#define FF_CPU_NUM_FORMAT_ARGS 10
 
 static int sortCores(const FFCPUCore* a, const FFCPUCore* b)
 {
@@ -17,13 +17,13 @@ void ffPrintCPU(FFCPUOptions* options)
 {
     FFCPUResult cpu = {
         .temperature = FF_CPU_TEMP_UNSET,
-        .frequencyMin = 0.0 / 0.0,
-        .frequencyMax = 0.0 / 0.0,
-        .frequencyBase = 0.0 / 0.0,
-        .frequencyBiosLimit = 0.0 / 0.0,
+        .frequencyMin = 0.0/0.0,
+        .frequencyMax = 0.0/0.0,
+        .frequencyBase = 0.0/0.0,
+        .frequencyBiosLimit = 0.0/0.0,
         .name = ffStrbufCreate(),
         .vendor = ffStrbufCreate(),
-        .coresUtilizationRate = FF_CPU_UTILIZATION_RATE_UNSET};
+    };
 
     const char* error = ffDetectCPU(options, &cpu);
 
@@ -86,12 +86,6 @@ void ffPrintCPU(FFCPUOptions* options)
                 ffTempsAppendNum(cpu.temperature, &str, options->tempConfig, &options->moduleArgs);
             }
 
-            if (cpu.coresUtilizationRate != FF_CPU_UTILIZATION_RATE_UNSET)
-            {
-                ffStrbufAppendS(&str, " - ");
-                ffPercentAppendNum(&str, cpu.coresUtilizationRate, options->percent, true, &options->moduleArgs);
-            }
-
             ffStrbufPutTo(&str, stdout);
         }
         else
@@ -113,18 +107,17 @@ void ffPrintCPU(FFCPUOptions* options)
             FF_STRBUF_AUTO_DESTROY tempStr = ffStrbufCreate();
             ffTempsAppendNum(cpu.temperature, &tempStr, options->tempConfig, &options->moduleArgs);
             FF_PRINT_FORMAT_CHECKED(FF_CPU_MODULE_NAME, 0, &options->moduleArgs, FF_PRINT_TYPE_DEFAULT, FF_CPU_NUM_FORMAT_ARGS, ((FFformatarg[]){
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_STRBUF, &cpu.name, "name"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_STRBUF, &cpu.vendor, "vendor"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_UINT16, &cpu.coresPhysical, "cores-physical"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_UINT16, &cpu.coresLogical, "cores-logical"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_UINT16, &cpu.coresOnline, "cores-online"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_DOUBLE, &cpu.coresUtilizationRate, "cores-utilization-rate"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_STRING, freqBase, "freq-base"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_STRING, freqMax, "freq-max"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_STRBUF, &tempStr, "temperature"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_STRBUF, &coreTypes, "core-types"},
-                                                                                                                                    {FF_FORMAT_ARG_TYPE_STRING, freqBioslimit, "freq-bios-limit"},
-                                                                                                                                }));
+                {FF_FORMAT_ARG_TYPE_STRBUF, &cpu.name, "name"},
+                {FF_FORMAT_ARG_TYPE_STRBUF, &cpu.vendor, "vendor"},
+                {FF_FORMAT_ARG_TYPE_UINT16, &cpu.coresPhysical, "cores-physical"},
+                {FF_FORMAT_ARG_TYPE_UINT16, &cpu.coresLogical, "cores-logical"},
+                {FF_FORMAT_ARG_TYPE_UINT16, &cpu.coresOnline, "cores-online"},
+                {FF_FORMAT_ARG_TYPE_STRING, freqBase, "freq-base"},
+                {FF_FORMAT_ARG_TYPE_STRING, freqMax, "freq-max"},
+                {FF_FORMAT_ARG_TYPE_STRBUF, &tempStr, "temperature"},
+                {FF_FORMAT_ARG_TYPE_STRBUF, &coreTypes, "core-types"},
+                {FF_FORMAT_ARG_TYPE_STRING, freqBioslimit, "freq-bios-limit"},
+            }));
         }
     }
 
@@ -237,7 +230,6 @@ void ffGenerateCPUJsonResult(FFCPUOptions* options, yyjson_mut_doc* doc, yyjson_
         yyjson_mut_obj_add_uint(doc, cores, "physical", cpu.coresPhysical);
         yyjson_mut_obj_add_uint(doc, cores, "logical", cpu.coresLogical);
         yyjson_mut_obj_add_uint(doc, cores, "online", cpu.coresOnline);
-        yyjson_mut_obj_add_real(doc, cores, "utilizationRate", cpu.coresUtilizationRate);
 
         yyjson_mut_val* frequency = yyjson_mut_obj_add_obj(doc, obj, "frequency");
         yyjson_mut_obj_add_real(doc, frequency, "base", cpu.frequencyBase);
@@ -262,19 +254,18 @@ void ffGenerateCPUJsonResult(FFCPUOptions* options, yyjson_mut_doc* doc, yyjson_
 
 void ffPrintCPUHelpFormat(void)
 {
-    FF_PRINT_MODULE_FORMAT_HELP_CHECKED(FF_CPU_MODULE_NAME, "{1} ({5}) @ {7} GHz", FF_CPU_NUM_FORMAT_ARGS, ((const char *[]){
-                                                                                                               "Name - name",
-                                                                                                               "Vendor - vendor",
-                                                                                                               "Physical core count - cores-physical",
-                                                                                                               "Logical core count - cores-logical",
-                                                                                                               "Online core count - cores-online",
-                                                                                                               "Utilization rate - cores-utilization-rate",
-                                                                                                               "Base frequency - freq-base",
-                                                                                                               "Max frequency - freq-max",
-                                                                                                               "Temperature (formatted) - temperature",
-                                                                                                               "Logical core count grouped by frequency - core-types",
-                                                                                                               "Bios limited frequency - freq-bios-limit",
-                                                                                                           }));
+    FF_PRINT_MODULE_FORMAT_HELP_CHECKED(FF_CPU_MODULE_NAME, "{1} ({5}) @ {7} GHz", FF_CPU_NUM_FORMAT_ARGS, ((const char* []) {
+        "Name - name",
+        "Vendor - vendor",
+        "Physical core count - cores-physical",
+        "Logical core count - cores-logical",
+        "Online core count - cores-online",
+        "Base frequency - freq-base",
+        "Max frequency - freq-max",
+        "Temperature (formatted) - temperature",
+        "Logical core count grouped by frequency - core-types",
+        "Bios limited frequency - freq-bios-limit",
+    }));
 }
 
 void ffInitCPUOptions(FFCPUOptions* options)
