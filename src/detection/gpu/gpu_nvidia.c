@@ -16,6 +16,7 @@ struct FFNvmlData {
     FF_LIBRARY_SYMBOL(nvmlDeviceGetBrand)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetUtilizationRates)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetUUID)
+    FF_LIBRARY_SYMBOL(nvmlDeviceGetIndex)
 
     bool inited;
 } nvmlData;
@@ -42,6 +43,7 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetBrand)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUtilizationRates)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUUID)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetIndex)
 
         if (ffnvmlInit_v2() != NVML_SUCCESS)
         {
@@ -106,6 +108,14 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
                 break;
         }
     }
+
+    if (result.index)
+    {
+        unsigned int value;
+        if (nvmlData.ffnvmlDeviceGetIndex(device, &value) == NVML_SUCCESS)
+            *result.index = (uint8_t)value;
+    }
+       
 
     if (result.temp)
     {

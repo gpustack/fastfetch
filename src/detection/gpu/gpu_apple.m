@@ -43,7 +43,17 @@ const char* ffGpuDetectMetal(FFlist* gpus)
                 ffStrbufSetStatic(&gpu->platformApi, "Metal Common 1");
 
             gpu->type = device.hasUnifiedMemory ? FF_GPU_TYPE_INTEGRATED : FF_GPU_TYPE_DISCRETE;
+            gpu->index = (uint8_t)device.locationNumber;
             #endif
+
+            int registryID_string_length = snprintf(NULL, 0, "%llu", device.registryID);
+            if (registryID_string_length > 0) {
+                size_t registryID_buffer_size = (size_t)registryID_string_length + 1;
+                char *registryID_buffer = (char *)malloc(registryID_buffer_size);
+                snprintf(registryID_buffer, registryID_buffer_size, "%llu", device.registryID);
+                ffStrbufAppendS(&gpu->uuid, registryID_buffer);
+                free(registryID_buffer);
+            }
 
             if (gpu->type == FF_GPU_TYPE_INTEGRATED)
             {
