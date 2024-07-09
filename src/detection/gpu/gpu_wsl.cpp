@@ -70,6 +70,7 @@ const char* ffGPUDetectByDirectX(FF_MAYBE_UNUSED const FFGPUOptions* options, FF
 
         FFGPUResult* gpu = (FFGPUResult*) ffListAdd(gpus);
         ffStrbufInitS(&gpu->name, desc);
+        gpu->index = FF_GPU_INDEX_UNSET;
         gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
         gpu->temperature = FF_GPU_TEMP_UNSET;
         gpu->frequency = FF_GPU_FREQUENCY_UNSET;

@@ -219,6 +219,7 @@ static const char* detectPci(const FFGPUOptions* options, FFlist* gpus, FFstrbuf
     ffStrbufInit(&gpu->uuid);
     ffStrbufInit(&gpu->driver);
     ffStrbufInit(&gpu->platformApi);
+    gpu->index = FF_GPU_INDEX_UNSET;
     gpu->temperature = FF_GPU_TEMP_UNSET;
     gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
     gpu->coreUtilizationRate = FF_GPU_CORE_UTILIZATION_RATE_UNSET;
@@ -288,6 +289,7 @@ static const char* detectPci(const FFGPUOptions* options, FFlist* gpus, FFstrbuf
                     },
                 },
                 (FFGpuDriverResult){
+                    .index = &gpu->index,
                     .temp = options->temp ? &gpu->temperature : NULL,
                     .memory = options->driverSpecific ? &gpu->dedicated : NULL,
                     .coreCount = options->driverSpecific ? (uint32_t *)&gpu->coreCount : NULL,
