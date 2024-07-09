@@ -46,6 +46,15 @@ const char* ffGpuDetectMetal(FFlist* gpus)
             gpu->index = (uint8_t)device.locationNumber;
             #endif
 
+            int registryID_string_length = snprintf(NULL, 0, "%llu", device.registryID);
+            if (registryID_string_length > 0) {
+                size_t registryID_buffer_size = (size_t)registryID_string_length + 1;
+                char *registryID_buffer = (char *)malloc(registryID_buffer_size);
+                snprintf(registryID_buffer, registryID_buffer_size, "%llu", device.registryID);
+                ffStrbufAppendS(&gpu->uuid, registryID_buffer);
+                free(registryID_buffer);
+            }
+
             if (gpu->type == FF_GPU_TYPE_INTEGRATED)
             {
                 gpu->shared.total = device.recommendedMaxWorkingSetSize;
