@@ -6884,6 +6884,16 @@ yyjson_api_inline bool yyjson_mut_obj_add_bool(yyjson_mut_doc *doc,
     });
 }
 
+yyjson_api_inline bool yyjson_mut_obj_add_uint8(yyjson_mut_doc *doc,
+                                               yyjson_mut_val *obj,
+                                               const char *_key,
+                                               uint8_t _val) {
+    yyjson_mut_obj_add_func({
+        val->tag = YYJSON_TYPE_NUM | YYJSON_SUBTYPE_UINT;
+        val->uni.u64 = _val;
+    });
+}
+
 yyjson_api_inline bool yyjson_mut_obj_add_uint(yyjson_mut_doc *doc,
                                                yyjson_mut_val *obj,
                                                const char *_key,

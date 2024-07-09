@@ -81,6 +81,7 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
         ffStrbufInit(&gpu->uuid);
         ffStrbufInit(&gpu->driver);
         ffStrbufInitStatic(&gpu->platformApi, "Direct3D");
+        gpu->index = FF_GPU_INDEX_UNSET;
         gpu->temperature = FF_GPU_TEMP_UNSET;
         gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
         gpu->type = FF_GPU_TYPE_UNKNOWN;
@@ -160,6 +161,7 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
                         .luid = gpu->deviceId,
                     },
                     (FFGpuDriverResult){
+                        .index = &gpu->index,
                         .temp = options->temp ? &gpu->temperature : NULL,
                         .memory = options->driverSpecific ? &gpu->dedicated : NULL,
                         .coreCount = options->driverSpecific ? (uint32_t *)&gpu->coreCount : NULL,

@@ -149,3 +149,5 @@ extern nvmlReturn_t nvmlDeviceGetBrand(nvmlDevice_t device, nvmlBrandType_t* typ
 extern nvmlReturn_t nvmlDeviceGetUtilizationRates(nvmlDevice_t device, nvmlUtilization_t *utilization);
 // Retrieves the globally unique immutable UUID associated with this device, as a 5 part hexadecimal string, that augments the immutable, board serial identifier.
 extern nvmlReturn_t nvmlDeviceGetUUID(nvmlDevice_t device, char *uuid, unsigned int length);
+// Retrieves the NVML index of this device.
+extern nvmlReturn_t nvmlDeviceGetIndex(nvmlDevice_t device, unsigned int *index);
