@@ -52,6 +52,15 @@ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus)
             continue;
         }
 
+        FFstrbuf category;
+        ffStrbufInit(&category);
+        if(ffCfDictGetString(properties, CFSTR("IOMatchCategory"), &category) || !ffStrbufContainS(&category, "IOAccelerator"))
+        {
+            CFRelease(properties);
+            IOObjectRelease(registryEntry);
+            continue;
+        }
+
         FFGPUResult* gpu = ffListAdd(gpus);
 
         gpu->dedicated.total = gpu->dedicated.used = gpu->shared.total = gpu->shared.used = FF_GPU_VMEM_SIZE_UNSET;
