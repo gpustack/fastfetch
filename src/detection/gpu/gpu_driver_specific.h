@@ -39,6 +39,7 @@ typedef struct FFGpuDriverResult
 {
     uint8_t* index;
     FFstrbuf* uuid;
+    FFstrbuf* name;
     double* temp;
     FFGPUMemory* memory;
     uint32_t* coreCount;

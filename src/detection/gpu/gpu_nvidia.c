@@ -17,6 +17,7 @@ struct FFNvmlData {
     FF_LIBRARY_SYMBOL(nvmlDeviceGetUtilizationRates)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetUUID)
     FF_LIBRARY_SYMBOL(nvmlDeviceGetIndex)
+    FF_LIBRARY_SYMBOL(nvmlDeviceGetName)
 
     bool inited;
 } nvmlData;
@@ -44,6 +45,7 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUtilizationRates)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUUID)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetIndex)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetName)
 
         if (ffnvmlInit_v2() != NVML_SUCCESS)
         {
@@ -166,6 +168,13 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
         char uuid[NVML_DEVICE_UUID_V2_BUFFER_SIZE];
         if (nvmlData.ffnvmlDeviceGetUUID(device, uuid, sizeof(uuid)) == NVML_SUCCESS)
             ffStrbufAppendS(result.uuid, uuid);
+    }
+
+    if (result.name)
+    {
+        char name[NVML_DEVICE_NAME_V2_BUFFER_SIZE];
+        if (nvmlData.ffnvmlDeviceGetName(device, name, sizeof(name)) == NVML_SUCCESS)
+            ffStrbufSetS(result.name, name);
     }
 
     return NULL;

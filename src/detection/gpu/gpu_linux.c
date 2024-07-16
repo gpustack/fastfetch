@@ -297,6 +297,7 @@ static const char* detectPci(const FFGPUOptions* options, FFlist* gpus, FFstrbuf
                     .frequency = options->driverSpecific ? &gpu->frequency : NULL,
                     .coreUtilizationRate = &gpu->coreUtilizationRate,
                     .uuid = &gpu->uuid,
+                    .name = &gpu->name,
                 },
                 "libnvidia-ml.so");
         }
