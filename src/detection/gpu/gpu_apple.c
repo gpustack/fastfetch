@@ -82,6 +82,35 @@ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus)
             if (!ffCfDictGetDict(properties, CFSTR("PerformanceStatistics"), &performanceDict))
             {
                 ffCfDictGetDouble(performanceDict, CFSTR("Device Utilization %"), &gpu->coreUtilizationRate);
+
+                bool isVram = false;
+                int64_t freeMemory = 0;
+                int64_t usedMemory = 0;
+                int64_t totalMemory = 0;
+
+                CFStringRef keys[] = {CFSTR("In use system memory"), CFSTR("In use system memory (driver)"), CFSTR("gartUsedBytes"), CFSTR("vramUsedBytes")};
+                for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+                    
+                    if (ffCfDictGetInt64(performanceDict, keys[i], &usedMemory) == NULL) {
+                        if (keys[i] == CFSTR("vramUsedBytes"))
+                        {
+                            isVram = true;
+                        }
+                        break;
+                    }
+                }
+
+                if(ffCfDictGetInt64(performanceDict, CFSTR("gartSizeBytes"), &totalMemory))
+                {
+                    if (isVram)
+                    {
+                        ffCfDictGetInt64(performanceDict, CFSTR("vramFreeBytes"), &freeMemory);
+                        totalMemory = usedMemory + freeMemory;
+                    }
+                }
+
+                gpu->dedicated.total = (uint64_t)totalMemory;
+                gpu->dedicated.used = (uint64_t)usedMemory;
             }
         }
 

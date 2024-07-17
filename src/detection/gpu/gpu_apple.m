@@ -58,7 +58,10 @@ const char* ffGpuDetectMetal(FFlist* gpus)
             if (gpu->type == FF_GPU_TYPE_INTEGRATED)
             {
                 gpu->shared.total = device.recommendedMaxWorkingSetSize;
-                gpu->shared.used = device.currentAllocatedSize;
+                gpu->shared.used = gpu->dedicated.used;
+                
+                gpu->dedicated.total = FF_GPU_VMEM_SIZE_UNSET;
+                gpu->dedicated.used = FF_GPU_VMEM_SIZE_UNSET;
             }
             else
             {
