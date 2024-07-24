@@ -16,6 +16,8 @@ static inline void ffStrbufSetWS(FFstrbuf* result, const wchar_t* source)
 
 void ffStrbufInitNWS(FFstrbuf* result, uint32_t length, const wchar_t* source);
 
+wchar_t* ffStrbufToWideChar(const FFstrbuf* strbuf);
+
 static inline void ffStrbufInitWS(FFstrbuf* result, const wchar_t* source)
 {
     if (!source) return ffStrbufInit(result);

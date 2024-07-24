@@ -23,6 +23,7 @@ typedef struct FFGpuDriverPciDeviceId
     uint32_t vendorId;
     uint32_t subSystemId;
     uint32_t revId;
+    uint32_t bus;
 } FFGpuDriverPciDeviceId;
 
 // Use pciBusId if not NULL; use pciDeviceId otherwise

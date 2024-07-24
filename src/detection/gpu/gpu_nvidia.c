@@ -85,7 +85,7 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
                 continue;
 
             if (pciInfo.pciDeviceId != ((cond->pciDeviceId.deviceId << 16u) | cond->pciDeviceId.vendorId) ||
-                pciInfo.pciSubSystemId != cond->pciDeviceId.subSystemId)
+                pciInfo.pciSubSystemId != cond->pciDeviceId.subSystemId || (cond->pciDeviceId.bus != FF_GPU_BUS_UNSET && (uint32_t)pciInfo.bus != cond->pciDeviceId.bus)) 
                 continue;
 
             break;

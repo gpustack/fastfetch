@@ -8,6 +8,7 @@
 #define FF_GPU_FREQUENCY_UNSET (0/0.0)
 #define FF_GPU_CORE_UTILIZATION_RATE_UNSET -1
 #define FF_GPU_INDEX_UNSET ((uint8_t)-1)
+#define FF_GPU_BUS_UNSET ((uint32_t)-1)
 
 extern const char* FF_GPU_VENDOR_NAME_APPLE;
 extern const char* FF_GPU_VENDOR_NAME_AMD;
@@ -42,6 +43,15 @@ typedef struct FFGPUResult
     uint64_t deviceId; // Used internally, may be uninitialized
     FFstrbuf uuid;     // Identifier for the GPU
 } FFGPUResult;
+
+typedef struct FFWindowGPUPci
+{
+    FFstrbuf deviceId;
+    FFlist  buses;
+    FFlist  usedBuses;
+    uint32_t busNumber;
+} FFWindowGPUPci;
+
 
 const char* ffDetectGPU(const FFGPUOptions* options, FFlist* result);
 const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus);

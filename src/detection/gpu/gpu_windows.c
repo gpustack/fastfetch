@@ -10,6 +10,16 @@ static int isGpuNameEqual(const FFGPUResult* gpu, const FFstrbuf* name)
     return ffStrbufEqual(&gpu->name, name);
 }
 
+static int isDeviceIdEqual(const FFWindowGPUPci* pci, const FFstrbuf* deviceId)
+{
+    return ffStrbufEqual(&pci->deviceId, deviceId);
+}
+
+static int isBusEqual(const uint32_t* bus, uint32_t* bus2)
+{
+    return *bus == *bus2;
+}
+
 static inline bool getDriverSpecificDetectionFn(const char* vendor, __typeof__(&ffDetectNvidiaGpuInfo)* pDetectFn, const char** pDllName)
 {
     if (vendor == FF_GPU_VENDOR_NAME_NVIDIA)
@@ -54,6 +64,8 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
     const uint32_t regControlVideoKeyPrefixLength = (uint32_t) wcslen(regControlVideoKey);
     const uint32_t deviceKeyPrefixLength = strlen("\\Registry\\Machine\\") + regControlVideoKeyPrefixLength;
 
+    FF_LIST_AUTO_DESTROY pcis = ffListCreate(sizeof (FFWindowGPUPci));
+
     for (DWORD i = 0; EnumDisplayDevicesW(NULL, i, &displayDevice, 0); ++i)
     {
         if (displayDevice.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) continue;
@@ -74,6 +86,88 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
         // displayDevice.DeviceID = MatchingDeviceId "PCI\\VEN_10DE&DEV_2782&SUBSYS_513417AA&REV_A1"
         unsigned vendorId = 0, deviceId = 0, subSystemId = 0, revId = 0;
         swscanf(displayDevice.DeviceID, L"PCI\\VEN_%x&DEV_%x&SUBSYS_%x&REV_%x", &vendorId, &deviceId, &subSystemId, &revId);
+        
+        wchar_t regEnumPciKey[MAX_PATH] = L"SYSTEM\\CurrentControlSet\\Enum\\";
+        const uint32_t regEnumPciKeyPrefixLength = (uint32_t) wcslen(regEnumPciKey);
+        
+
+        FF_STRBUF_AUTO_DESTROY pciStrBuf = ffStrbufCreateWS(displayDevice.DeviceID);
+        size_t deviceIDLength = wcslen(displayDevice.DeviceID);
+        
+        if (regEnumPciKeyPrefixLength + deviceIDLength >= MAX_PATH) {
+            continue;
+        }
+        wmemcpy(regEnumPciKey + regEnumPciKeyPrefixLength, displayDevice.DeviceID, deviceIDLength);
+        
+        uint32_t pciBusId = FF_GPU_BUS_UNSET;
+        uint32_t pciIndex = 0;
+        pciIndex = ffListFirstIndexComp(&pcis, &pciStrBuf, (void*) isDeviceIdEqual);
+        if (pciIndex != pcis.length && pcis.length > 0) {
+            FFWindowGPUPci* gpuPci = (FFWindowGPUPci*)ffListGet(&pcis, pciIndex);
+            for (uint32_t i = 0; i < gpuPci->busNumber; ++i)
+            {
+                uint32_t* currentPciBusId = ffListGet(&gpuPci->buses, i);
+                if (!ffListContains(&gpuPci->usedBuses, currentPciBusId,  (void*) isBusEqual)) {
+                    pciBusId = *currentPciBusId;
+                    *(uint32_t*) ffListAdd(&gpuPci->usedBuses) = pciBusId;
+                    break;
+                }
+            }
+
+        } else {
+            FFWindowGPUPci* gpuPci = (FFWindowGPUPci*)ffListAdd(&pcis);
+            gpuPci->deviceId = pciStrBuf;
+            ffListInit(&gpuPci->buses, sizeof(uint32_t));
+            ffListInit(&gpuPci->usedBuses, sizeof(uint32_t));         
+
+            FF_HKEY_AUTO_DESTROY hKey = NULL;
+            if(ffRegOpenKeyForRead(HKEY_LOCAL_MACHINE, regEnumPciKey, &hKey, NULL))
+            {
+                if (!ffRegGetNSubKeys(hKey, &gpuPci->busNumber, NULL))
+                {
+                    continue;
+                }
+
+
+                for (uint32_t i = 0; i < gpuPci->busNumber; ++i)
+                {
+                    FF_STRBUF_AUTO_DESTROY subKey = ffStrbufCreate();
+                    if (!ffRegGetSubKey(hKey, i, &subKey, NULL)) {
+                        continue;
+                    }
+
+                    wchar_t* widePciDeviceKey = ffStrbufToWideChar(&subKey);
+                    if (widePciDeviceKey == NULL) {
+                        continue;
+                    }
+
+                    FF_HKEY_AUTO_DESTROY pciDevicHKey = NULL;
+                    if (!ffRegOpenKeyForRead(hKey, widePciDeviceKey, &pciDevicHKey, NULL))
+                    {
+                        free(widePciDeviceKey);
+                        continue;
+                    }
+                    free(widePciDeviceKey);
+                    
+                    // LocationInformation example: @System32\\drivers\\pci.sys,#65536;PCI bus %1, device %2, function %3;(114,0,0)
+                    FF_STRBUF_AUTO_DESTROY locationInformation = ffStrbufCreate();
+                    if (!ffRegReadStrbuf(pciDevicHKey, L"LocationInformation", &locationInformation, NULL)){
+                        continue;
+                    }
+                        
+                    int busId = -1;
+                    if (sscanf(locationInformation.chars, "@System32\\drivers\\pci.sys,#65536;PCI bus %%1, device %%2, function %%3;(%d", &busId) == 1) {
+                        *(uint32_t*) ffListAdd(&gpuPci->buses) = (uint32_t)busId;
+                    } 
+                }
+
+                if (gpuPci->buses.length > 0) {
+                    uint32_t* busId = ffListGet(&gpuPci->buses, 0);
+                    pciBusId = *busId;
+                    *(uint32_t*) ffListAdd(&gpuPci->usedBuses) = *busId;
+                }
+            } 
+        } 
 
         FFGPUResult* gpu = (FFGPUResult*)ffListAdd(gpus);
         ffStrbufInitStatic(&gpu->vendor, ffGetGPUVendorString(vendorId));
@@ -157,6 +251,7 @@ const char* ffDetectGPUImpl(FF_MAYBE_UNUSED const FFGPUOptions* options, FFlist*
                             .vendorId = vendorId,
                             .subSystemId = subSystemId,
                             .revId = revId,
+                            .bus = pciBusId,
                         },
                         .luid = gpu->deviceId,
                     },
