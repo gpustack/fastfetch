@@ -22,6 +22,57 @@ struct FFNvmlData {
     bool inited;
 } nvmlData;
 
+const char* ffDetectNvidiaGpuCount(uint32_t* result, const char* soName)
+{
+#ifndef FF_DISABLE_DLOPEN
+
+    if (!nvmlData.inited)
+    {
+        nvmlData.inited = true;
+        FF_LIBRARY_LOAD(libnvml, NULL, "dlopen nvml failed", soName , 1);
+        FF_LIBRARY_LOAD_SYMBOL_MESSAGE(libnvml, nvmlInit_v2)
+        FF_LIBRARY_LOAD_SYMBOL_MESSAGE(libnvml, nvmlShutdown)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetCount_v2)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetHandleByIndex_v2)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetHandleByPciBusId_v2)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetPciInfo_v3)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetTemperature)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetMemoryInfo_v2)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetMemoryInfo)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetNumGpuCores)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetMaxClockInfo)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetBrand)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUtilizationRates)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetUUID)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetIndex)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libnvml, nvmlData, nvmlDeviceGetName)
+
+        if (ffnvmlInit_v2() != NVML_SUCCESS)
+        {
+            nvmlData.ffnvmlDeviceGetNumGpuCores = NULL;
+            return "nvmlInit_v2() failed";
+        }
+        atexit((void*) ffnvmlShutdown);
+        libnvml = NULL; // don't close nvml
+    }
+
+    if (nvmlData.ffnvmlDeviceGetNumGpuCores == NULL)
+        return "loading nvml library failed";
+
+    uint32_t count;
+    if (nvmlData.ffnvmlDeviceGetCount_v2(&count) != NVML_SUCCESS)
+        return "nvmlDeviceGetCount_v2() failed";
+    
+    *result = count;
+    return NULL;
+#else
+
+    FF_UNUSED(cond, result, soName);
+    return "dlopen is disabled";
+
+#endif
+}
+
 const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName)
 {
 #ifndef FF_DISABLE_DLOPEN
@@ -91,6 +142,15 @@ const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverR
             break;
         }
         if (!device) return "Device not found";
+    }
+    else if (cond->type & FF_GPU_DRIVER_CONDITION_TYPE_INDEX)
+    {
+        if (nvmlData.ffnvmlDeviceGetHandleByIndex_v2((unsigned int)cond->index, &device) != NVML_SUCCESS)
+            return "nvmlDeviceGetHandleByIndex_v2() failed";
+    }
+    else
+    {
+        return "Unknown condition type";
     }
 
     nvmlBrandType_t brand;

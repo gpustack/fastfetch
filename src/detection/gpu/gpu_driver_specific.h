@@ -7,6 +7,7 @@ typedef enum FFGpuDriverConditionType
     FF_GPU_DRIVER_CONDITION_TYPE_BUS_ID = 1 << 0,
     FF_GPU_DRIVER_CONDITION_TYPE_DEVICE_ID = 1 << 1,
     FF_GPU_DRIVER_CONDITION_TYPE_LUID = 1 << 2,
+    FF_GPU_DRIVER_CONDITION_TYPE_INDEX = 1 << 3,
 } FFGpuDriverConditionType;
 
 typedef struct FFGpuDriverPciBusId
@@ -33,6 +34,7 @@ typedef struct FFGpuDriverCondition
     FFGpuDriverPciBusId pciBusId;
     FFGpuDriverPciDeviceId pciDeviceId;
     uint64_t luid;
+    int32_t index;
 } FFGpuDriverCondition;
 
 // detect x if not NULL
@@ -50,5 +52,6 @@ typedef struct FFGpuDriverResult
 } FFGpuDriverResult;
 
 const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName);
+const char* ffDetectNvidiaGpuCount(uint32_t* result, const char* soName);
 const char* ffDetectIntelGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName);
 const char* ffDetectAmdGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName);

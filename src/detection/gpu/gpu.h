@@ -9,6 +9,7 @@
 #define FF_GPU_CORE_UTILIZATION_RATE_UNSET -1
 #define FF_GPU_INDEX_UNSET ((uint8_t)-1)
 #define FF_GPU_BUS_UNSET ((uint32_t)-1)
+#define FF_GPU_COUNT_UNSET ((uint32_t)-1)
 
 extern const char* FF_GPU_VENDOR_NAME_APPLE;
 extern const char* FF_GPU_VENDOR_NAME_AMD;
