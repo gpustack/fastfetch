@@ -220,6 +220,7 @@ static const char* detectVulkan(FFVulkanResult* result)
         gpu->type = physicalDeviceProperties.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ? FF_GPU_TYPE_DISCRETE : FF_GPU_TYPE_INTEGRATED;
         ffStrbufInitS(&gpu->vendor, ffGetGPUVendorString(physicalDeviceProperties.properties.vendorID));
         ffStrbufInitS(&gpu->driver, driverProperties.driverInfo);
+        ffStrbufInit(&gpu->uuid);
 
         VkPhysicalDeviceMemoryProperties memoryProperties = {};
         ffvkGetPhysicalDeviceMemoryProperties(physicalDevices[i], &memoryProperties);
@@ -234,6 +235,7 @@ static const char* detectVulkan(FFVulkanResult* result)
         }
 
         //No way to detect those using vulkan
+        gpu->index = FF_GPU_INDEX_UNSET;
         gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
         gpu->temperature = FF_GPU_TEMP_UNSET;
         gpu->frequency = FF_GPU_FREQUENCY_UNSET;

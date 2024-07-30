@@ -75,12 +75,15 @@ static const char* openCLHandleData(OpenCLData* data, FFOpenCLResult* result)
             ffStrbufInit(&gpu->vendor);
             ffStrbufInit(&gpu->driver);
             ffStrbufInit(&gpu->platformApi);
+            ffStrbufInit(&gpu->uuid);
+            gpu->index = FF_GPU_INDEX_UNSET;
             gpu->temperature = FF_GPU_TEMP_UNSET;
             gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
             gpu->type = FF_GPU_TYPE_UNKNOWN;
             gpu->dedicated.total = gpu->dedicated.used = gpu->shared.total = gpu->shared.used = FF_GPU_VMEM_SIZE_UNSET;
             gpu->deviceId = (size_t) deviceID;
             gpu->frequency = FF_GPU_FREQUENCY_UNSET;
+            gpu->coreUtilizationRate = FF_GPU_CORE_UTILIZATION_RATE_UNSET;
 
             if (data->ffclGetDeviceInfo(deviceID, CL_DEVICE_VERSION, sizeof(buffer), buffer, NULL) == CL_SUCCESS)
             {
