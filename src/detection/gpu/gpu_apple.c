@@ -132,7 +132,7 @@ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus)
             ffCfDictGetString(properties, CFSTR("model"), &gpu->name);
         }
 
-        gpu->uuid = ffStrbufGetUUID(&gpu->name);
+        ffStrbufInit(&gpu->uuid);
 
         ffStrbufInit(&gpu->vendor);
         int vendorId;

@@ -53,12 +53,14 @@ const char* detectByOpenGL(FFlist* gpus)
         ffStrbufInitMove(&gpu->name, &result.renderer);
         ffStrbufInitMove(&gpu->driver, &result.vendor);
         ffStrbufInitF(&gpu->platformApi, "OpenGL %s", result.version.chars);
+        ffStrbufInit(&gpu->uuid);
         gpu->index = FF_GPU_INDEX_UNSET;
         gpu->temperature = FF_GPU_TEMP_UNSET;
         gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
         gpu->frequency = FF_GPU_FREQUENCY_UNSET;
         gpu->dedicated = gpu->shared = (FFGPUMemory){0, 0};
         gpu->deviceId = 0;
+        gpu->coreUtilizationRate = FF_GPU_CORE_UTILIZATION_RATE_UNSET;
 
         if (ffStrbufContainS(&gpu->name, "Apple"))
         {

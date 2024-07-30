@@ -329,7 +329,13 @@ void ffGenerateGPUJsonResult(FFGPUOptions* options, yyjson_mut_doc* doc, yyjson_
     {
         yyjson_mut_val* obj = yyjson_mut_arr_add_obj(doc, arr);
 
+        if (gpu->index != FF_GPU_INDEX_UNSET){
         yyjson_mut_obj_add_uint8(doc, obj, "index", gpu->index);
+        }
+        else
+        {
+            yyjson_mut_obj_add_null(doc, obj, "index");
+        }
 
         yyjson_mut_obj_add_strbuf(doc, obj, "uuid", &gpu->uuid);
 
@@ -398,6 +404,7 @@ void ffGenerateGPUJsonResult(FFGPUOptions* options, yyjson_mut_doc* doc, yyjson_
         ffStrbufDestroy(&gpu->name);
         ffStrbufDestroy(&gpu->driver);
         ffStrbufDestroy(&gpu->platformApi);
+        ffStrbufDestroy(&gpu->uuid);
     }
 }
 
