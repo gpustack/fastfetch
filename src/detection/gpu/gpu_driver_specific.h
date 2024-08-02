@@ -48,10 +48,12 @@ typedef struct FFGpuDriverResult
     uint32_t* coreCount;
     FFGPUType* type;
     double* frequency;
-    double* coreUtilizationRate; 
+    double* coreUtilizationRate;
 } FFGpuDriverResult;
 
 const char* ffDetectNvidiaGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName);
 const char* ffDetectNvidiaGpuCount(uint32_t* result, const char* soName);
 const char* ffDetectIntelGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName);
 const char* ffDetectAmdGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName);
+const char* ffDetectMthreadsGpuInfo(const FFGpuDriverCondition* cond, FFGpuDriverResult result, const char* soName);
+const char* ffDetectMthreadsGpuCount(uint32_t* result, const char* soName);

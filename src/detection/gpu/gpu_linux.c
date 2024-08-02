@@ -310,6 +310,41 @@ static const char* detectPci(const FFGPUOptions* options, FFlist* gpus, FFstrbuf
                 gpu->type = FF_GPU_TYPE_DISCRETE;
         }
     }
+    else if (gpu->vendor.chars == FF_GPU_VENDOR_NAME_MTHREADS)
+    {
+        if (options->temp || options->driverSpecific)
+        {
+            ffDetectMthreadsGpuInfo(&(FFGpuDriverCondition){
+                    .type = FF_GPU_DRIVER_CONDITION_TYPE_BUS_ID,
+                    .pciBusId = {
+                        .domain = pciDomain,
+                        .bus = pciBus,
+                        .device = pciDevice,
+                        .func = pciFunc,
+                    },
+                },
+                (FFGpuDriverResult){
+                    .index = &gpu->index,
+                    .temp = options->temp ? &gpu->temperature : NULL,
+                    .memory = options->driverSpecific ? &gpu->dedicated : NULL,
+                    .coreCount = options->driverSpecific ? (uint32_t *)&gpu->coreCount : NULL,
+                    .type = &gpu->type,
+                    .frequency = options->driverSpecific ? &gpu->frequency : NULL,
+                    .coreUtilizationRate = &gpu->coreUtilizationRate,
+                    .uuid = &gpu->uuid,
+                    .name = &gpu->name,
+                },
+                "libmtml.so");
+        }
+
+        if (gpu->type == FF_GPU_TYPE_UNKNOWN)
+        {
+            if (ffStrbufStartsWithIgnCaseS(&gpu->name, "GeForce") ||
+                ffStrbufStartsWithIgnCaseS(&gpu->name, "Quadro") ||
+                ffStrbufStartsWithIgnCaseS(&gpu->name, "Tesla"))
+                gpu->type = FF_GPU_TYPE_DISCRETE;
+        }
+    }
 
     return NULL;
 }
