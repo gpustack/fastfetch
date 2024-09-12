@@ -5,6 +5,7 @@
 
 struct FFMtmlData
 {
+    FF_LIBRARY_SYMBOL(mtmlDeviceCountGpuCores)
     FF_LIBRARY_SYMBOL(mtmlDeviceGetBrand)
     FF_LIBRARY_SYMBOL(mtmlDeviceGetIndex)
     FF_LIBRARY_SYMBOL(mtmlDeviceGetName)
@@ -19,6 +20,7 @@ struct FFMtmlData
     FF_LIBRARY_SYMBOL(mtmlLibraryInitDeviceByIndex)
     FF_LIBRARY_SYMBOL(mtmlLibraryInitDeviceByPciSbdf)
     FF_LIBRARY_SYMBOL(mtmlLibraryInitSystem)
+    FF_LIBRARY_SYMBOL(mtmlLibraryShutDown)
     FF_LIBRARY_SYMBOL(mtmlMemoryGetTotal)
     FF_LIBRARY_SYMBOL(mtmlMemoryGetUsed)
     FF_LIBRARY_SYMBOL(mtmlMemoryGetUtilization)
@@ -27,6 +29,11 @@ struct FFMtmlData
     MtmlLibrary *lib;
     MtmlSystem *sys;
 } mtmlData;
+
+static void shutdownMtml()
+{
+    mtmlData.ffmtmlLibraryShutDown(mtmlData.lib);
+}
 
 const char *ffDetectMthreadsGpuCount(uint32_t *result, const char *soName)
 {
@@ -37,7 +44,7 @@ const char *ffDetectMthreadsGpuCount(uint32_t *result, const char *soName)
         mtmlData.inited = true;
         FF_LIBRARY_LOAD(libmtml, NULL, "dlopen mtml failed", soName, 1);
         FF_LIBRARY_LOAD_SYMBOL_MESSAGE(libmtml, mtmlLibraryInit)
-        FF_LIBRARY_LOAD_SYMBOL_MESSAGE(libmtml, mtmlLibraryShutDown)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceCountGpuCores)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceGetBrand)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceGetIndex)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceGetName)
@@ -52,6 +59,7 @@ const char *ffDetectMthreadsGpuCount(uint32_t *result, const char *soName)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryInitDeviceByIndex)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryInitDeviceByPciSbdf)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryInitSystem)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryShutDown)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlMemoryGetTotal)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlMemoryGetUsed)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlMemoryGetUtilization)
@@ -66,7 +74,7 @@ const char *ffDetectMthreadsGpuCount(uint32_t *result, const char *soName)
             mtmlData.ffmtmlLibraryInitSystem = NULL;
             return "mtmlLibraryInitSystem failed";
         }
-        atexit((void *)ffmtmlLibraryShutDown);
+        atexit(shutdownMtml);
         libmtml = NULL; // don't close mtml
     }
 
@@ -96,7 +104,7 @@ const char *ffDetectMthreadsGpuInfo(const FFGpuDriverCondition *cond, FFGpuDrive
         mtmlData.inited = true;
         FF_LIBRARY_LOAD(libmtml, NULL, "dlopen mtml failed", soName, 1);
         FF_LIBRARY_LOAD_SYMBOL_MESSAGE(libmtml, mtmlLibraryInit)
-        FF_LIBRARY_LOAD_SYMBOL_MESSAGE(libmtml, mtmlLibraryShutDown)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceCountGpuCores)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceGetBrand)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceGetIndex)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlDeviceGetName)
@@ -111,6 +119,7 @@ const char *ffDetectMthreadsGpuInfo(const FFGpuDriverCondition *cond, FFGpuDrive
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryInitDeviceByIndex)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryInitDeviceByPciSbdf)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryInitSystem)
+        FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlLibraryShutDown)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlMemoryGetTotal)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlMemoryGetUsed)
         FF_LIBRARY_LOAD_SYMBOL_VAR_MESSAGE(libmtml, mtmlData, mtmlMemoryGetUtilization)
@@ -125,7 +134,7 @@ const char *ffDetectMthreadsGpuInfo(const FFGpuDriverCondition *cond, FFGpuDrive
             mtmlData.ffmtmlLibraryInitSystem = NULL;
             return "mtmlLibraryInitSystem failed";
         }
-        atexit((void *)ffmtmlLibraryShutDown);
+        atexit(shutdownMtml);
         libmtml = NULL; // don't close mtml
     }
 
@@ -221,6 +230,9 @@ const char *ffDetectMthreadsGpuInfo(const FFGpuDriverCondition *cond, FFGpuDrive
                 result.memory->used = used;
         }
     }
+
+    if (result.coreCount)
+        mtmlData.ffmtmlDeviceCountGpuCores(device, result.coreCount);
 
     if (result.frequency)
     {

@@ -336,14 +336,6 @@ static const char* detectPci(const FFGPUOptions* options, FFlist* gpus, FFstrbuf
                 },
                 "libmtml.so");
         }
-
-        if (gpu->type == FF_GPU_TYPE_UNKNOWN)
-        {
-            if (ffStrbufStartsWithIgnCaseS(&gpu->name, "GeForce") ||
-                ffStrbufStartsWithIgnCaseS(&gpu->name, "Quadro") ||
-                ffStrbufStartsWithIgnCaseS(&gpu->name, "Tesla"))
-                gpu->type = FF_GPU_TYPE_DISCRETE;
-        }
     }
 
     return NULL;
