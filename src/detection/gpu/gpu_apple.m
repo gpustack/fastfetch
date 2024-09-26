@@ -45,6 +45,11 @@ const char* ffGpuDetectMetal(FFlist* gpus)
             gpu->type = device.hasUnifiedMemory ? FF_GPU_TYPE_INTEGRATED : FF_GPU_TYPE_DISCRETE;
             gpu->index = (uint32_t) device.locationNumber;
             #endif
+
+            if (device.hasUnifiedMemory)
+            {
+                gpu->shared.total = device.recommendedMaxWorkingSetSize;
+            }
         }
         return NULL;
     }
