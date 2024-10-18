@@ -3,9 +3,11 @@ build/
 .vscode/
 .cache/
 .kdev4/
+.idea/
 .DS_Store
 cscope.*
 tags
 fastfetch.kdev4
 *.user
 *.user.*
+cmake-build-*/
